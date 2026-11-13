@@ -1,0 +1,10 @@
+import React, { useEffect, useState } from 'react';
+import { Link, useParams } from 'react-router-dom';
+import { Bookmark, ChevronRight } from 'lucide-react';
+import { api } from '../api/backend';
+import { getDetail, getChapters } from '../api/manga';
+import { useAuth } from '../auth/AuthContext';
+import { titleOf } from '../utils/manga';
+
+function Detail(){const{id}=useParams(),[m,setM]=useState(null),[chapters,setChapters]=useState([]),[err,setErr]=useState('');const{token,user}=useAuth();useEffect(()=>{getDetail(id).then(setM).catch(e=>setErr(e.message));getChapters(id).then(d=>setChapters(d.items||[])).catch(e=>setErr(e.message))},[id]);async function bookmark(){try{await api('/api/me/bookmarks/'+id,{method:'PUT',token});alert('เพิ่มบุ๊กมาร์กแล้ว')}catch(e){alert(e.message)}}if(err)return <div className="empty">{err}</div>;if(!m)return <div className="empty">กำลังโหลด...</div>;return <section className="detail"><div className="detailcover">{m.cover_url&&<img src={m.cover_url}/>}</div><div className="detailtext"><div className="eyebrow">MANGA DETAILS</div><h1>{titleOf(m)}</h1>{m.title_th&&<h3>{m.title}</h3>}<p>{m.description||'ยังไม่มีเรื่องย่อ'}</p><div className="actions"><button className="primary" onClick={()=>document.getElementById('chapters').scrollIntoView({behavior:'smooth'})}>เลือกตอนอ่าน <ChevronRight/></button>{user&&<button className="secondary" onClick={bookmark}><Bookmark/> บุ๊กมาร์ก</button>}</div><small>Data provided by MangaDex · Scanlation group credits belong to each chapter.</small></div><div className="chapterlist" id="chapters"><div className="sectionhead"><h2>รายการตอน <span className="muted">/ Chapters</span></h2><span>{chapters.length} CHAPTERS</span></div>{chapters.map(c=><Link className="chapter" to={'/read/'+c.id} key={c.id}><div><b>ตอนที่ {c.chapter_number||'—'} {c.title||''}</b><small>{c.translated_language} · {c.scanlation_group||'Unknown group'}</small></div><span>{c.is_free?'FREE':'MEMBER'} <ChevronRight size={17}/></span></Link>)}{!chapters.length&&<div className="empty">ยังไม่มีข้อมูลตอนในฐานข้อมูล กด Sync ตอนจาก MangaDex ในเวอร์ชันถัดไป</div>}</div></section>}
+export default Detail;
