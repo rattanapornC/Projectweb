@@ -1,2 +1,7 @@
-import React from 'react';
-export default function Footer() { return <footer><div className="footbrand">Manga<span className="pink">Hub</span></div><p>ข้อมูลมังงะและภาพประกอบให้บริการผ่าน MangaDex · Please support the original creators and scanlation groups.</p><p><a href="https://mangadex.org" target="_blank" rel="noreferrer">MangaDex</a> · เคารพลิขสิทธิ์และคำขอให้นำเนื้อหาออก · No ads or paid access.</p></footer>; }
+export default function Footer() {
+  return (
+    <footer className="footer">
+      ข้อมูลและรูปภาพจาก MangaDex · โปรเจคเพื่อการเรียนรู้
+    </footer>
+  );
+}

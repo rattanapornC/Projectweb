@@ -1,21 +1,39 @@
-import React from 'react';
+
 import { Routes, Route } from 'react-router-dom';
-import { AuthProvider } from './auth/AuthContext';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Home from './pages/Home';
+import Manga from './pages/Manga';
 import MangaDetail from './pages/MangaDetail';
 import Reader from './pages/Reader';
-import AuthPage from './pages/AuthPage';
-import Bookmarks from './pages/Bookmarks';
-import Admin from './pages/Admin';
+import ApiLab from './pages/ApiLab';
+import About from './pages/About';
+import NotFound from './pages/NotFound';
+import Login from './pages/Login';
+import Register from './pages/Register';
 
 export default function App() {
- return <AuthProvider><div className="app"><Navbar/><main><Routes>
-  <Route path="/" element={<Home/>}/><Route path="/library" element={<Home/>}/>
-  <Route path="/manga/:id" element={<MangaDetail/>}/><Route path="/read/:id" element={<Reader/>}/>
-  <Route path="/login" element={<AuthPage mode="login"/>}/><Route path="/register" element={<AuthPage mode="register"/>}/>
-  <Route path="/bookmarks" element={<Bookmarks/>}/><Route path="/admin" element={<Admin/>}/>
-  <Route path="*" element={<Home/>}/>
- </Routes></main><Footer/></div></AuthProvider>;
+  return (
+    <>
+      <Navbar />
+
+      <main className="container">
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/manga" element={<Manga />} />
+          <Route path="/manga/:id" element={<MangaDetail />} />
+          <Route path="/read/:chapterId" element={<Reader />} />
+          <Route path="/lab" element={<ApiLab />} />
+          <Route path="/about" element={<About />} />
+
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </main>
+
+      <Footer />
+    </>
+  );
 }
