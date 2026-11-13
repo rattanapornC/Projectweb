@@ -1,118 +1,143 @@
-// ชั้นกลางคุยกับ MangaDex API (เอกสาร: https://api.mangadex.org/docs/)
-// หน้าเพจเรียกใช้ฟังก์ชันจากไฟล์นี้เท่านั้น ไม่ fetch เองตรง ๆ
+
 import { onceADay } from './cache';
 import { api } from '../api';
 
 const BASE = import.meta.env.VITE_API_BASE || '/mdx';
-const COVER_BASE = 'https://uploads.mangadex.org/covers';
-const RATINGS = ['safe', 'suggestive']; // ไม่ดึงเนื้อหา 18+ มาแสดง
 
-// แปลง object เป็น query string ตามสไตล์ของ MangaDex
-//   { includes: ['cover_art'] }   -> includes[]=cover_art
-//   { order: { followedCount: 'desc' } } -> order[followedCount]=desc
-function toQuery(params) {
-  const q = new URLSearchParams();
-  for (const [k, v] of Object.entries(params)) {
-    if (v === undefined || v === null || v === '') continue;
-    if (Array.isArray(v)) v.forEach((x) => q.append(`${k}[]`, x));
-    else if (typeof v === 'object') {
-      for (const [sk, sv] of Object.entries(v)) q.append(`${k}[${sk}]`, sv);
-    } else q.append(k, v);
-  }
-  return q.toString();
+// สร้าง query string
+function toQuery(params = {}) {
+  const query = new URLSearchParams();
+
+  Object.entries(params).forEach(([key, value]) => {
+    if (value === undefined || value === null || value === '') return;
+
+    if (Array.isArray(value)) {
+      value.forEach((item) => query.append(`${key}[]`, item));
+    } else if (typeof value === 'object') {
+      Object.entries(value).forEach(([subKey, subValue]) => {
+        query.append(`${key}[${subKey}]`, subValue);
+      });
+    } else {
+      query.append(key, value);
+    }
+  });
+
+  return query.toString();
 }
 
-// TODO ขั้นที่ 1: ทำให้ request() จัดการ error ได้ดีขึ้น
-//   - status 429 (ยิงถี่เกินไป) -> โยน Error ข้อความภาษาไทยว่า "รอสักครู่แล้วลองใหม่"
-//   - fetch ล้มเหลวเพราะเน็ต -> ข้อความ "เชื่อมต่อไม่ได้"
+// Request สำหรับ ApiLab
 export async function request(path, params = {}) {
-  const qs = toQuery(params);
-  const res = await fetch(`${BASE}${path}${qs ? `?${qs}` : ''}`);
-  if (!res.ok) throw new Error(`API ตอบกลับ ${res.status}`);
-  return res.json();
+  const query = toQuery(params);
+  const url = `${BASE}${path}${query ? `?${query}` : ''}`;
+
+  let response;
+
+  try {
+    response = await fetch(url);
+  } catch {
+    throw new Error('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้');
+  }
+
+  if (response.status === 429) {
+    throw new Error('มีการเรียก API มากเกินไป กรุณารอสักครู่');
+  }
+
+  if (!response.ok) {
+    throw new Error(`Request failed: ${response.status}`);
+  }
+
+  return response.json();
 }
 
-// ---------- แปลงข้อมูลดิบให้อยู่ในรูปที่หน้าเพจใช้ง่าย ----------
-const pick = (obj) => obj?.en || obj?.['ja-ro'] || Object.values(obj || {})[0] || '';
+// แปลงข้อมูลมังงะ
+export function normalizeManga(manga) {
+  if (!manga) return null;
 
-export function normalizeManga(m) {
-  const a = m.attributes || {};
-  const coverFile = m.relationships?.find((r) => r.type === 'cover_art')?.attributes?.fileName;
+  let cover = manga.cover || manga.cover_url || '';
+
+  // ใช้ Image Proxy สำหรับรูปปก
+  if (
+    cover &&
+    cover.startsWith('https://uploads.mangadex.org/covers/')
+  ) {
+    cover = `/api/cover?url=${encodeURIComponent(cover)}`;
+  }
+
   return {
-    id: m.id,
-    title: pick(a.title),
-    description: pick(a.description),
-    status: a.status, // ongoing / completed / hiatus / cancelled
-    year: a.year,
-    tags: (a.tags || []).map((t) => pick(t.attributes?.name)),
-    cover: coverFile ? `${COVER_BASE}/${m.id}/${coverFile}.256.jpg` : null,
+    id: manga.id,
+    title: manga.title || manga.title_en || manga.title_th || 'ไม่มีชื่อ',
+    description: manga.description || '',
+    status: manga.status || '',
+    year: manga.year || null,
+    tags: manga.tags || [],
+    cover,
+    originalLanguage: manga.original_language || manga.originalLanguage || '',
+    contentRating: manga.content_rating || manga.contentRating || '',
   };
 }
 
-// ---------- ฟังก์ชันที่หน้าเพจเรียกใช้ ----------
-export async function searchManga({ title, limit = 24, offset = 0, order = { followedCount: 'desc' } } = {}) {
-  const json = await request('/manga', {
-    title,
-    limit,
-    offset,
-    order,
-    includes: ['cover_art'],
-    contentRating: RATINGS,
-    availableTranslatedLanguage: ['en'],
-    hasAvailableChapters: 'true',
-  });
-  return json.data.map(normalizeManga);
+// ค้นหามังงะ
+export async function searchManga(query) {
+  const response = await api(
+    `/api/manga?q=${encodeURIComponent(query)}`
+  );
+
+  return (response.items || []).map(normalizeManga);
 }
 
+// มังงะยอดนิยม
+export async function getPopularManga() {
+  const response = await api('/api/manga/popular');
 
+  return (response.items || []).map(normalizeManga);
+}
 
-export async function getPopularManga(limit = 24) {
-  const response = await api('/api/manga');
+// รายละเอียดมังงะ
+export async function getManga(id) {
+  const response = await api(
+    `/api/manga/${encodeURIComponent(id)}`
+  );
 
-  const items = response.items || [];
+  const manga = response.item || response.manga || response;
 
-  return items.slice(0, limit).map((m) => ({
-    id: m.id,
-    title: m.title || m.title_th || 'ไม่มีชื่อเรื่อง',
-    description: m.description || '',
-    status: m.status || 'ongoing',
-    year: m.year || null,
-    tags: m.tags || [],
-    cover: m.cover || m.cover_url || null,
+  return normalizeManga(manga);
+}
+
+// Tags
+export async function getTags() {
+  return [];
+}
+
+// รายการตอน
+export async function getChapters(mangaId) {
+  const response = await api(
+    `/api/manga/${encodeURIComponent(mangaId)}/chapters`
+  );
+
+  return (response.items || []).map((chapter) => ({
+    id: chapter.id,
+    chapter: chapter.chapter_number,
+    title: chapter.title || '',
+    pages: null,
+    language: chapter.translated_language,
+    scanlationGroup: chapter.scanlation_group,
   }));
 }
 
-export async function getManga(id) {
-  const json = await request(`/manga/${id}`, { includes: ['cover_art'] });
-  return normalizeManga(json.data);
+export async function getChapterInfo(chapterId) {
+  return api(`/api/chapters/${encodeURIComponent(chapterId)}`);
 }
 
-export async function getTags() {
-  const json = await request('/manga/tag');
-  return json.data.map((t) => ({ id: t.id, name: pick(t.attributes.name) }));
-}
-
-export async function getChapters(mangaId, lang = 'en') {
-  const json = await request(`/manga/${mangaId}/feed`, {
-    translatedLanguage: [lang],
-    order: { chapter: 'asc' },
-    contentRating: RATINGS,
-    limit: 100,
-  });
-  return json.data
-    .filter((c) => !c.attributes.externalUrl) // ตอนที่ลิงก์ไปเว็บอื่นอ่านในเว็บเราไม่ได้
-    .map((c) => ({
-      id: c.id,
-      chapter: c.attributes.chapter,
-      title: c.attributes.title,
-      pages: c.attributes.pages,
-    }));
-}
-
+// หน้ามังงะ
+// ประกาศฟังก์ชันนี้เพียงจุดเดียว
 export async function getChapterPages(chapterId) {
-  const json = await request(`/at-home/server/${chapterId}`);
-  const { hash, data } = json.chapter;
-  return data.map((file) => `${json.baseUrl}/data/${hash}/${file}`);
+  const response = await api(
+    `/api/chapters/${encodeURIComponent(chapterId)}/pages`
+  );
+
+  return (response.pages || []).map((url) =>
+    `/api/page?url=${encodeURIComponent(url)}`
+  );
 }
 
 export { onceADay };

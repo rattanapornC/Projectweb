@@ -157,3 +157,259 @@ form.review { display: grid; gap: 8px; max-width: 480px; margin: 12px 0; }
   color: white !important;
   border-radius: 6px;
 }
+
+
+/* Chapter selector */
+
+.chapter-section {
+  margin-top: 42px;
+  padding-bottom: 40px;
+}
+
+.chapter-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.chapter-heading h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+
+.chapter-subtitle {
+  color: #999;
+  font-size: 0.9rem;
+  margin: 6px 0 0;
+}
+
+.chapter-total {
+  color: #aaa;
+  background: #252525;
+  border: 1px solid #383838;
+  padding: 8px 14px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.chapter-toolbar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.chapter-search {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  gap: 10px;
+  background: #202020;
+  border: 1px solid #383838;
+  border-radius: 12px;
+  padding: 0 14px;
+  color: #aaa;
+}
+
+.chapter-search:focus-within {
+  border-color: #8b5cf6;
+}
+
+.chapter-search span {
+  font-size: 1.5rem;
+}
+
+.chapter-search input {
+  width: 100%;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: white;
+  padding: 13px 0;
+  font-size: 0.9rem;
+}
+
+.chapter-search input::placeholder {
+  color: #777;
+}
+
+.chapter-sort {
+  border: 1px solid #383838;
+  background: #252525;
+  color: #eee;
+  border-radius: 12px;
+  padding: 0 16px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: 0.2s;
+}
+
+.chapter-sort:hover {
+  background: #38304e;
+  border-color: #8b5cf6;
+}
+
+/* Chapter cards */
+
+.chapter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 12px;
+}
+
+.chapter-card {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+  min-width: 0;
+  padding: 17px;
+  background: #202020;
+  border: 1px solid #353535;
+  border-radius: 14px;
+  color: inherit;
+  text-decoration: none;
+  transition: transform 0.2s, border-color 0.2s,
+    background 0.2s, box-shadow 0.2s;
+}
+
+.chapter-card:hover {
+  transform: translateY(-3px);
+  border-color: #8b5cf6;
+  background: #292333;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+.chapter-card-number {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #a78bfa;
+  font-size: 0.85rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+.chapter-arrow {
+  font-size: 1.1rem;
+  opacity: 0.6;
+}
+
+.chapter-card-title {
+  color: #eee;
+  font-size: 0.95rem;
+  font-weight: 600;
+  min-height: 24px;
+  overflow-wrap: anywhere;
+}
+
+.chapter-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid #383838;
+  color: #999;
+  font-size: 0.75rem;
+}
+
+.chapter-card-footer span:last-child {
+  color: #a78bfa;
+}
+
+.chapter-empty {
+  text-align: center;
+  color: #999;
+  padding: 35px 10px;
+  background: #202020;
+  border-radius: 12px;
+}
+
+@media (max-width: 600px) {
+  .chapter-heading {
+    align-items: flex-start;
+  }
+
+  .chapter-toolbar {
+    flex-direction: column;
+  }
+
+  .chapter-search {
+    min-height: 46px;
+  }
+
+  .chapter-sort {
+    min-height: 44px;
+  }
+
+  .chapter-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.reader-page {
+  width: 100%;
+}
+
+.reader-navigation {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 16px 10px;
+  flex-wrap: wrap;
+}
+
+.reader-navigation button,
+.reader-navigation select,
+.reader-next-button {
+  padding: 10px 16px;
+  border: 1px solid var(--border, #444);
+  border-radius: 8px;
+  background: var(--card, #222);
+  color: inherit;
+  font-size: 14px;
+}
+
+.reader-navigation select {
+  flex: 1;
+  max-width: 350px;
+  min-width: 150px;
+}
+
+.reader-navigation button {
+  cursor: pointer;
+}
+
+.reader-navigation button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.reader-end {
+  text-align: center;
+  padding: 30px 10px;
+}
+
+.reader-next-button {
+  cursor: pointer;
+  background: var(--primary, #6c5ce7);
+  color: white;
+  border: none;
+  font-weight: bold;
+}
+
+.reader-next-button:hover {
+  opacity: 0.85;
+}
+
+.reader img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
